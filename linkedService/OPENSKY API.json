@@ -4,7 +4,7 @@
 		"annotations": [],
 		"type": "HttpServer",
 		"typeProperties": {
-			"url": "https://opensky-network.org/api/states/all/states/all",
+			"url": "https://opensky-network.org/api/states/all",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
 		}
