@@ -1,0 +1,9 @@
+{
+	"name": "ADF-BD2026",
+	"location": "spaincentral",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "292cc98c-fe0a-408e-b0a4-db2055dccfa3",
+		"tenantId": "ef4a684e-81b5-491c-a98e-c7b31be6c469"
+	}
+}
