@@ -1,0 +1,10 @@
+{
+	"name": "datalake",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://2026bigdata.dfs.core.windows.net/"
+		}
+	}
+}
