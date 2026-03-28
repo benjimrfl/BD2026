@@ -1,0 +1,33 @@
+{
+	"name": "OPENSKY_API",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "OPENSKY API",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"time": {
+					"type": "integer"
+				},
+				"states": {
+					"type": "array",
+					"items": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			}
+		}
+	}
+}
