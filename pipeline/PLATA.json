@@ -18,11 +18,6 @@
 					"dataflow": {
 						"referenceName": "PLATA",
 						"type": "DataFlowReference",
-						"datasetParameters": {
-							"sink1": {
-								"timestamp": "toString(currentTimestamp())"
-							}
-						},
 						"linkedServiceParameters": {
 							"sink1": {
 								"schemaLinkedService": {

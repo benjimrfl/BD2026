@@ -14,9 +14,9 @@
 			],
 			"sinks": [
 				{
-					"dataset": {
-						"referenceName": "Plata",
-						"type": "DatasetReference"
+					"linkedService": {
+						"referenceName": "datalake",
+						"type": "LinkedServiceReference"
 					},
 					"name": "sink1"
 				}
@@ -95,7 +95,19 @@
 				"     skipDuplicateMapOutputs: true) ~> select1",
 				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     format: 'parquet',",
+				"     format: 'delta',",
+				"     compressionType: 'snappy',",
+				"     compressionLevel: 'Fastest',",
+				"     fileSystem: 'aerodata',",
+				"     folderPath: ('plata/' + toString(currentTimestamp())),",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
