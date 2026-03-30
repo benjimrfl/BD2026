@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "GET",
+				"name": "GET_DATA",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {

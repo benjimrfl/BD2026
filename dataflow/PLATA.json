@@ -1,0 +1,107 @@
+{
+	"name": "PLATA",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "datalake",
+						"type": "LinkedServiceReference"
+					},
+					"name": "BRONCE"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Plata",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "getColumnas"
+				},
+				{
+					"name": "flatten1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          states as string[][],",
+				"          time as integer",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'json',",
+				"     fileSystem: 'aerodata',",
+				"     folderPath: 'bronce',",
+				"     fileName: 'bronce.json',",
+				"     documentForm: 'documentPerLine') ~> BRONCE",
+				"flatten1 derive(icao24 = states[1],",
+				"          callsign = states[2],",
+				"          origin_country = states[3],",
+				"          time_position = states[4],",
+				"          last_contact = states[5],",
+				"          longitude = states[6],",
+				"          latitude = states[7],",
+				"          baro_altitude = states[8],",
+				"          on_ground = states[9],",
+				"          velocity = states[10],",
+				"          true_track = states[11],",
+				"          vertical_rate = states[12],",
+				"          sensors = states[13],",
+				"          geo_altitude = states[14],",
+				"          squawk = states[15],",
+				"          spi = states[16],",
+				"          position_source = states[17],",
+				"          category = states[18]) ~> getColumnas",
+				"BRONCE foldDown(unroll(states, states),",
+				"     mapColumn(",
+				"          states,",
+				"          time",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> flatten1",
+				"getColumnas select(mapColumn(",
+				"          icao24,",
+				"          callsign,",
+				"          origin_country,",
+				"          time_position,",
+				"          last_contact,",
+				"          longitude,",
+				"          latitude,",
+				"          baro_altitude,",
+				"          on_ground,",
+				"          velocity,",
+				"          true_track,",
+				"          vertical_rate,",
+				"          sensors,",
+				"          geo_altitude,",
+				"          squawk,",
+				"          spi,",
+				"          position_source,",
+				"          category",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sink1"
+			]
+		}
+	}
+}
