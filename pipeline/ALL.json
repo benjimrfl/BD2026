@@ -72,7 +72,7 @@
 				"typeProperties": {
 					"variableName": "timestamp",
 					"value": {
-						"value": "@utcNow()",
+						"value": "@convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time', 'dd-MM-yyyy HH:mm:ss')",
 						"type": "Expression"
 					}
 				}
