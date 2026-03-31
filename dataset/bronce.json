@@ -5,12 +5,20 @@
 			"referenceName": "datalake",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"timestamp": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "bronce.json",
+				"fileName": {
+					"value": "@dataset().timestamp",
+					"type": "Expression"
+				},
 				"folderPath": "bronce",
 				"fileSystem": "aerodata"
 			}

@@ -1,0 +1,88 @@
+{
+	"name": "ALL",
+	"properties": {
+		"activities": [
+			{
+				"name": "BRONCE",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Set timestamp",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "BRONCE",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"timestamp": {
+							"value": "@variables('timestamp')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PLATA",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "BRONCE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PLATA",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"timestamp": {
+							"value": "@variables('timestamp')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Set timestamp",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "timestamp",
+					"value": {
+						"value": "@utcNow()",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"timestamp": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}

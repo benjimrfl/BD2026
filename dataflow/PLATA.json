@@ -14,11 +14,11 @@
 			],
 			"sinks": [
 				{
-					"linkedService": {
-						"referenceName": "datalake",
-						"type": "LinkedServiceReference"
+					"dataset": {
+						"referenceName": "Plata",
+						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "PLATA"
 				}
 			],
 			"transformations": [
@@ -33,6 +33,9 @@
 				}
 			],
 			"scriptLines": [
+				"parameters{",
+				"     timestamp as string",
+				"}",
 				"source(output(",
 				"          states as string[][],",
 				"          time as integer",
@@ -95,24 +98,34 @@
 				"     skipDuplicateMapOutputs: true) ~> select1",
 				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     format: 'delta',",
-				"     compressionType: 'snappy',",
-				"     compressionLevel: 'Fastest',",
-				"     fileSystem: 'aerodata',",
-				"     folderPath: ('plata/' + toString(currentTimestamp())),",
-				"     mergeSchema: false,",
-				"     autoCompact: false,",
-				"     optimizedWrite: false,",
-				"     vacuum: 0,",
-				"     deletable: false,",
-				"     insertable: true,",
-				"     updateable: false,",
-				"     upsertable: false,",
+				"     input(",
+				"          icao24 as string,",
+				"          callsign as string,",
+				"          origin_country as string,",
+				"          time_position as string,",
+				"          last_contact as string,",
+				"          longitude as string,",
+				"          latitude as string,",
+				"          baro_altitude as string,",
+				"          on_ground as string,",
+				"          velocity as string,",
+				"          true_track as string,",
+				"          vertical_rate as string,",
+				"          sensors as string,",
+				"          geo_altitude as string,",
+				"          squawk as string,",
+				"          spi as string,",
+				"          position_source as string,",
+				"          category as string",
+				"     ),",
+				"     format: 'parquet',",
+				"     partitionFileNames:[($timestamp)],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> PLATA"
 			]
 		}
 	}

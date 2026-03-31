@@ -1,0 +1,93 @@
+{
+	"name": "Plata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "plata",
+				"fileSystem": "aerodata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "icao24",
+				"type": "UTF8"
+			},
+			{
+				"name": "callsign",
+				"type": "UTF8"
+			},
+			{
+				"name": "origin_country",
+				"type": "UTF8"
+			},
+			{
+				"name": "time_position",
+				"type": "UTF8"
+			},
+			{
+				"name": "last_contact",
+				"type": "UTF8"
+			},
+			{
+				"name": "longitude",
+				"type": "UTF8"
+			},
+			{
+				"name": "latitude",
+				"type": "UTF8"
+			},
+			{
+				"name": "baro_altitude",
+				"type": "UTF8"
+			},
+			{
+				"name": "on_ground",
+				"type": "UTF8"
+			},
+			{
+				"name": "velocity",
+				"type": "UTF8"
+			},
+			{
+				"name": "true_track",
+				"type": "UTF8"
+			},
+			{
+				"name": "vertical_rate",
+				"type": "UTF8"
+			},
+			{
+				"name": "sensors",
+				"type": "UTF8"
+			},
+			{
+				"name": "geo_altitude",
+				"type": "UTF8"
+			},
+			{
+				"name": "squawk",
+				"type": "UTF8"
+			},
+			{
+				"name": "spi",
+				"type": "UTF8"
+			},
+			{
+				"name": "position_source",
+				"type": "UTF8"
+			},
+			{
+				"name": "category",
+				"type": "UTF8"
+			}
+		]
+	}
+}

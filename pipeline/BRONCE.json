@@ -45,11 +45,22 @@
 				"outputs": [
 					{
 						"referenceName": "bronce",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"timestamp": {
+								"value": "@pipeline().parameters.timestamp",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
 		],
+		"parameters": {
+			"timestamp": {
+				"type": "string"
+			}
+		},
 		"annotations": []
 	}
 }
