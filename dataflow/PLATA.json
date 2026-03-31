@@ -47,7 +47,7 @@
 				"     format: 'json',",
 				"     fileSystem: 'aerodata',",
 				"     folderPath: 'bronce',",
-				"     fileName: 'bronce.json',",
+				"     fileName: ($timestamp),",
 				"     documentForm: 'documentPerLine') ~> BRONCE",
 				"flatten1 derive(icao24 = states[1],",
 				"          callsign = states[2],",
