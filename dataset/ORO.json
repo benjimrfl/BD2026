@@ -1,0 +1,29 @@
+{
+	"name": "ORO",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "datalake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"timestamp": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().timestamp",
+					"type": "Expression"
+				},
+				"folderPath": "plata",
+				"fileSystem": "aerodata"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

@@ -1,0 +1,86 @@
+{
+	"name": "ORO",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ORO",
+						"type": "DatasetReference"
+					},
+					"name": "PLATA"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     timestamp as string",
+				"}",
+				"source(output(",
+				"          icao24 as string,",
+				"          callsign as string,",
+				"          origin_country as string,",
+				"          time_position as string,",
+				"          last_contact as string,",
+				"          longitude as string,",
+				"          latitude as string,",
+				"          baro_altitude as string,",
+				"          on_ground as string,",
+				"          velocity as string,",
+				"          true_track as string,",
+				"          vertical_rate as string,",
+				"          sensors as string,",
+				"          geo_altitude as string,",
+				"          squawk as string,",
+				"          spi as string,",
+				"          position_source as string,",
+				"          category as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> PLATA",
+				"PLATA derive(time_position = toTimestamp(toLong(time_position) * 1000),",
+				"          last_contact = toTimestamp(toLong(last_contact) * 1000),",
+				"          longitude = toFloat(longitude),",
+				"          latitude = toFloat(latitude),",
+				"          baro_altitude = toFloat(baro_altitude),",
+				"          on_ground = toBoolean(on_ground),",
+				"          velocity = toFloat(velocity),",
+				"          true_track = toFloat(true_track),",
+				"          vertical_rate = toFloat(vertical_rate),",
+				"          geo_altitude = toFloat(geo_altitude),",
+				"          spi = toBoolean(spi),",
+				"          position_source = toInteger(position_source),",
+				"          category = iif(isNull(category), 0, toInteger(category))) ~> derivedColumn1",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'ORO',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

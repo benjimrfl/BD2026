@@ -1,6 +1,61 @@
 {
 	"name": "ORO",
 	"properties": {
+		"activities": [
+			{
+				"name": "ORO",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "ORO",
+						"type": "DataFlowReference",
+						"parameters": {
+							"timestamp": {
+								"value": "'@{pipeline().parameters.timestamp}'",
+								"type": "Expression"
+							}
+						},
+						"datasetParameters": {
+							"PLATA": {
+								"timestamp": {
+									"value": "@pipeline().parameters.timestamp",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceParameters": {
+							"PLATA": {
+								"schemaLinkedService": {
+									"timestamp": {
+										"value": "@pipeline().parameters.timestamp",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"parameters": {
+			"timestamp": {
+				"type": "string"
+			}
+		},
 		"annotations": []
 	}
 }

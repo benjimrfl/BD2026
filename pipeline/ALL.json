@@ -76,6 +76,35 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "ORO",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PLATA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "ORO",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"timestamp": {
+							"value": "@variables('timestamp')",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
 		"variables": {
