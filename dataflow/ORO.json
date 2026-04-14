@@ -10,6 +10,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "PLATA"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "paises"
 				}
 			],
 			"sinks": [
@@ -19,11 +26,36 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "sink1"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "sink2"
 				}
 			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "select3"
+				},
+				{
+					"name": "alterRow1"
 				}
 			],
 			"scriptLines": [
@@ -54,6 +86,18 @@
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false,",
 				"     format: 'parquet') ~> PLATA",
+				"source(output(",
+				"          id_pais as integer,",
+				"          descripcion as string,",
+				"          creacion as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_pais',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> paises",
 				"PLATA derive(time_position = toTimestamp(toLong(time_position) * 1000),",
 				"          last_contact = toTimestamp(toLong(last_contact) * 1000),",
 				"          longitude = toFloat(longitude),",
@@ -67,6 +111,32 @@
 				"          spi = toBoolean(spi),",
 				"          position_source = toInteger(position_source),",
 				"          category = iif(isNull(category), 0, toInteger(category))) ~> derivedColumn1",
+				"derivedColumn1 select(mapColumn(",
+				"          origin_country,",
+				"          icao24",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 aggregate(groupBy(origin_country),",
+				"     icao24 = first(icao24)) ~> aggregate1",
+				"paises select(mapColumn(",
+				"          id_pais,",
+				"          descripcion",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"aggregate1, select2 join(origin_country == descripcion,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          origin_country,",
+				"          descripcion",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"select3 alterRow(insertIf(origin_country != descripcion)) ~> alterRow1",
 				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -79,7 +149,23 @@
 				"     upsertable: false,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1",
+				"alterRow1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_pais',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          descripcion = origin_country",
+				"     )) ~> sink2"
 			]
 		}
 	}

@@ -1,0 +1,101 @@
+{
+	"name": "FT",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "ORO"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "pais"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "join1"
+				},
+				{
+					"name": "select1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id_vuelo as integer,",
+				"          icao24 as string,",
+				"          callsign as string,",
+				"          origin_country as string,",
+				"          time_position as timestamp,",
+				"          last_contact as timestamp,",
+				"          longitude as double,",
+				"          latitude as double,",
+				"          baro_altitude as double,",
+				"          on_ground as boolean,",
+				"          velocity as double,",
+				"          true_track as double,",
+				"          vertical_rate as double,",
+				"          geo_altitude as double,",
+				"          squawk as string,",
+				"          spi as boolean,",
+				"          position_source as integer,",
+				"          category as integer,",
+				"          fecha_insercion as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'oro',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> ORO",
+				"source(output(",
+				"          id_pais as integer,",
+				"          descripcion as string,",
+				"          creacion as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_pais',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> pais",
+				"ORO, pais join(origin_country == descripcion,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 select(mapColumn(",
+				"          id_vuelo,",
+				"          callsign,",
+				"          id_pais,",
+				"          time_position,",
+				"          last_contact,",
+				"          longitude,",
+				"          latitude,",
+				"          baro_altitude,",
+				"          on_ground,",
+				"          velocity,",
+				"          true_track,",
+				"          vertical_rate,",
+				"          geo_altitude,",
+				"          squawk,",
+				"          spi,",
+				"          position_source,",
+				"          category",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1"
+			]
+		}
+	}
+}

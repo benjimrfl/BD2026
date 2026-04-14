@@ -31,17 +31,38 @@
 									"type": "Expression"
 								}
 							}
-						},
-						"linkedServiceParameters": {
-							"PLATA": {
-								"schemaLinkedService": {
-									"timestamp": {
-										"value": "@pipeline().parameters.timestamp",
-										"type": "Expression"
-									}
-								}
-							}
 						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "FT",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "ORO",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "FT",
+						"type": "DataFlowReference"
 					},
 					"compute": {
 						"coreCount": 8,
