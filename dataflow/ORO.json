@@ -17,6 +17,13 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "paises"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "aviones"
 				}
 			],
 			"sinks": [
@@ -33,6 +40,13 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "sink2"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "sink3"
 				}
 			],
 			"transformations": [
@@ -56,6 +70,24 @@
 				},
 				{
 					"name": "alterRow1"
+				},
+				{
+					"name": "select4"
+				},
+				{
+					"name": "aggregate2"
+				},
+				{
+					"name": "select5"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "alterRow2"
 				}
 			],
 			"scriptLines": [
@@ -98,6 +130,18 @@
 				"     schemaName: 'dbo',",
 				"     tableName: 'd_pais',",
 				"     isolationLevel: 'READ_UNCOMMITTED') ~> paises",
+				"source(output(",
+				"          id_avion as integer,",
+				"          descripcion as string,",
+				"          creacion as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_aviones',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> aviones",
 				"PLATA derive(time_position = toTimestamp(toLong(time_position) * 1000),",
 				"          last_contact = toTimestamp(toLong(last_contact) * 1000),",
 				"          longitude = toFloat(longitude),",
@@ -136,7 +180,28 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select3",
-				"select3 alterRow(insertIf(origin_country != descripcion)) ~> alterRow1",
+				"select3 alterRow(insertIf(origin_country!=descripcion)) ~> alterRow1",
+				"derivedColumn1 select(mapColumn(",
+				"          icao24,",
+				"          callsign",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select4",
+				"select4 aggregate(groupBy(callsign),",
+				"     icao24 = first(icao24)) ~> aggregate2",
+				"aviones select(mapColumn(",
+				"          id_avion,",
+				"          descripcion",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select5",
+				"aggregate2 filter(callsign != '') ~> filter1",
+				"filter1, select5 join(callsign == descripcion,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"join2 alterRow(insertIf(callsign!=descripcion)) ~> alterRow2",
 				"derivedColumn1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'table',",
@@ -147,6 +212,7 @@
 				"     updateable: false,",
 				"     deletable: false,",
 				"     upsertable: false,",
+				"     truncate: true,",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError') ~> sink1",
@@ -156,16 +222,39 @@
 				"     store: 'sqlserver',",
 				"     schemaName: 'dbo',",
 				"     tableName: 'd_pais',",
-				"     insertable: true,",
+				"     insertable: false,",
 				"     updateable: false,",
 				"     deletable: false,",
-				"     upsertable: false,",
+				"     upsertable: true,",
+				"     keys:['descripcion'],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'stopOnFirstError',",
 				"     mapColumn(",
 				"          descripcion = origin_country",
-				"     )) ~> sink2"
+				"     )) ~> sink2",
+				"alterRow2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          id_avion as integer,",
+				"          descripcion as string,",
+				"          creacion as timestamp",
+				"     ),",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_aviones',",
+				"     insertable: false,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: true,",
+				"     keys:['descripcion'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          descripcion = callsign",
+				"     )) ~> sink3"
 			]
 		}
 	}

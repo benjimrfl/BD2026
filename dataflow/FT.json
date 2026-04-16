@@ -17,15 +17,36 @@
 						"type": "LinkedServiceReference"
 					},
 					"name": "pais"
+				},
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "aviones"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "database",
+						"type": "LinkedServiceReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "join1"
 				},
 				{
 					"name": "select1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "select2"
 				}
 			],
 			"scriptLines": [
@@ -69,15 +90,26 @@
 				"     schemaName: 'dbo',",
 				"     tableName: 'd_pais',",
 				"     isolationLevel: 'READ_UNCOMMITTED') ~> pais",
-				"ORO, pais join(origin_country == descripcion,",
+				"source(output(",
+				"          id_avion as integer,",
+				"          descripcion as string,",
+				"          creacion as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'd_aviones',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> aviones",
+				"select1, pais join(origin_country == descripcion,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
 				"     broadcast: 'auto')~> join1",
-				"join1 select(mapColumn(",
-				"          id_vuelo,",
+				"ORO select(mapColumn(",
 				"          callsign,",
-				"          id_pais,",
+				"          origin_country,",
 				"          time_position,",
 				"          last_contact,",
 				"          longitude,",
@@ -88,13 +120,47 @@
 				"          true_track,",
 				"          vertical_rate,",
 				"          geo_altitude,",
-				"          squawk,",
-				"          spi,",
 				"          position_source,",
 				"          category",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> select1"
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"join1, aviones join(callsign == aviones@descripcion,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"join2 select(mapColumn(",
+				"          id_avion,",
+				"          id_pais,",
+				"          ultima_posicion = time_position,",
+				"          ultimo_contacto = last_contact,",
+				"          longitud = longitude,",
+				"          latitud = latitude,",
+				"          altitud_bar = baro_altitude,",
+				"          altitud_geo = geo_altitude,",
+				"          en_suelo = on_ground,",
+				"          velocidad = velocity,",
+				"          rumbo_grados = true_track,",
+				"          tasa_vertical = vertical_rate,",
+				"          id_posicion = position_source,",
+				"          id_categoria = category",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     store: 'sqlserver',",
+				"     schemaName: 'dbo',",
+				"     tableName: 'ft_vuelos',",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     deletable: false,",
+				"     upsertable: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
 			]
 		}
 	}
