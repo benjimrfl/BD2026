@@ -1,0 +1,84 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory",
+			"defaultValue": "ADF-BD2026"
+		},
+		"database_password": {
+			"type": "secureString",
+			"metadata": "Cadena protegida para \"password\"de \"database\""
+		},
+		"OPENSKY API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://opensky-network.org/api/states/all"
+		},
+		"database_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aerodata2026.database.windows.net"
+		},
+		"database_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "aerodata2026"
+		},
+		"database_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "aerodata2026"
+		},
+		"datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://2026bigdata.dfs.core.windows.net/"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI de la cuenta de almacenamiento que contiene las plantillas de ARM vinculadas."
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Token de SAS para la cuenta de almacenamiento que contiene las plantillas de ARM vinculadas"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "ADF-BD2026_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"database_password": {
+						"value": "[parameters('database_password')]"
+					},
+					"OPENSKY API_properties_typeProperties_url": {
+						"value": "[parameters('OPENSKY API_properties_typeProperties_url')]"
+					},
+					"database_properties_typeProperties_server": {
+						"value": "[parameters('database_properties_typeProperties_server')]"
+					},
+					"database_properties_typeProperties_database": {
+						"value": "[parameters('database_properties_typeProperties_database')]"
+					},
+					"database_properties_typeProperties_userName": {
+						"value": "[parameters('database_properties_typeProperties_userName')]"
+					},
+					"datalake_properties_typeProperties_url": {
+						"value": "[parameters('datalake_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}

@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "ADF-BD2026"
+		},
+		"database_password": {
+			"value": ""
+		},
+		"OPENSKY API_properties_typeProperties_url": {
+			"value": "https://opensky-network.org/api/states/all"
+		},
+		"database_properties_typeProperties_server": {
+			"value": "aerodata2026.database.windows.net"
+		},
+		"database_properties_typeProperties_database": {
+			"value": "aerodata2026"
+		},
+		"database_properties_typeProperties_userName": {
+			"value": "aerodata2026"
+		},
+		"datalake_properties_typeProperties_url": {
+			"value": "https://2026bigdata.dfs.core.windows.net/"
+		}
+	}
+}

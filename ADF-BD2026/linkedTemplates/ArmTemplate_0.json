@@ -1,0 +1,1280 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nombre de instancia de Data Factory",
+			"defaultValue": "ADF-BD2026"
+		},
+		"database_password": {
+			"type": "secureString",
+			"metadata": "Cadena protegida para \"password\"de \"database\""
+		},
+		"OPENSKY API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://opensky-network.org/api/states/all"
+		},
+		"database_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "aerodata2026.database.windows.net"
+		},
+		"database_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "aerodata2026"
+		},
+		"database_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "aerodata2026"
+		},
+		"datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://2026bigdata.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/OPENSKY API')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('OPENSKY API_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/database')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('database_properties_typeProperties_server')]",
+					"database": "[parameters('database_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('database_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('database_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/datalake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('datalake_properties_typeProperties_url')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/OPENSKY_API')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "OPENSKY API",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"time": {
+							"type": "integer"
+						},
+						"states": {
+							"type": "array",
+							"items": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/OPENSKY API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ORO')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().timestamp",
+							"type": "Expression"
+						},
+						"folderPath": "plata",
+						"fileSystem": "aerodata"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Plata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "plata",
+						"fileSystem": "aerodata"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "icao24",
+						"type": "UTF8"
+					},
+					{
+						"name": "callsign",
+						"type": "UTF8"
+					},
+					{
+						"name": "origin_country",
+						"type": "UTF8"
+					},
+					{
+						"name": "time_position",
+						"type": "UTF8"
+					},
+					{
+						"name": "last_contact",
+						"type": "UTF8"
+					},
+					{
+						"name": "longitude",
+						"type": "UTF8"
+					},
+					{
+						"name": "latitude",
+						"type": "UTF8"
+					},
+					{
+						"name": "baro_altitude",
+						"type": "UTF8"
+					},
+					{
+						"name": "on_ground",
+						"type": "UTF8"
+					},
+					{
+						"name": "velocity",
+						"type": "UTF8"
+					},
+					{
+						"name": "true_track",
+						"type": "UTF8"
+					},
+					{
+						"name": "vertical_rate",
+						"type": "UTF8"
+					},
+					{
+						"name": "sensors",
+						"type": "UTF8"
+					},
+					{
+						"name": "geo_altitude",
+						"type": "UTF8"
+					},
+					{
+						"name": "squawk",
+						"type": "UTF8"
+					},
+					{
+						"name": "spi",
+						"type": "UTF8"
+					},
+					{
+						"name": "position_source",
+						"type": "UTF8"
+					},
+					{
+						"name": "category",
+						"type": "UTF8"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/bronce')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().timestamp",
+							"type": "Expression"
+						},
+						"folderPath": "bronce",
+						"fileSystem": "aerodata"
+					}
+				},
+				"schema": {
+					"type": "object",
+					"properties": {
+						"time": {
+							"type": "integer"
+						},
+						"states": {
+							"type": "array",
+							"items": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FT')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ORO"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "pais"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "aviones"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "join2"
+						},
+						{
+							"name": "select2"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          id_vuelo as integer,",
+						"          icao24 as string,",
+						"          callsign as string,",
+						"          origin_country as string,",
+						"          time_position as timestamp,",
+						"          last_contact as timestamp,",
+						"          longitude as double,",
+						"          latitude as double,",
+						"          baro_altitude as double,",
+						"          on_ground as boolean,",
+						"          velocity as double,",
+						"          true_track as double,",
+						"          vertical_rate as double,",
+						"          geo_altitude as double,",
+						"          squawk as string,",
+						"          spi as boolean,",
+						"          position_source as integer,",
+						"          category as integer,",
+						"          fecha_insercion as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'oro',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> ORO",
+						"source(output(",
+						"          id_pais as integer,",
+						"          descripcion as string,",
+						"          creacion as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_pais',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> pais",
+						"source(output(",
+						"          id_avion as integer,",
+						"          descripcion as string,",
+						"          creacion as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_aviones',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> aviones",
+						"select1, pais join(origin_country == descripcion,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"ORO select(mapColumn(",
+						"          callsign,",
+						"          origin_country,",
+						"          time_position,",
+						"          last_contact,",
+						"          longitude,",
+						"          latitude,",
+						"          baro_altitude,",
+						"          on_ground,",
+						"          velocity,",
+						"          true_track,",
+						"          vertical_rate,",
+						"          geo_altitude,",
+						"          position_source,",
+						"          category",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"join1, aviones join(callsign == aviones@descripcion,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join2",
+						"join2 select(mapColumn(",
+						"          id_avion,",
+						"          id_pais,",
+						"          ultima_posicion = time_position,",
+						"          ultimo_contacto = last_contact,",
+						"          longitud = longitude,",
+						"          latitud = latitude,",
+						"          altitud_bar = baro_altitude,",
+						"          altitud_geo = geo_altitude,",
+						"          en_suelo = on_ground,",
+						"          velocidad = velocity,",
+						"          rumbo_grados = true_track,",
+						"          tasa_vertical = vertical_rate,",
+						"          id_posicion = position_source,",
+						"          id_categoria = category",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"select2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'ft_vuelos',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/database')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BRONCE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "GET_DATA",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "OPENSKY_API",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "bronce",
+								"type": "DatasetReference",
+								"parameters": {
+									"timestamp": {
+										"value": "@pipeline().parameters.timestamp",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/OPENSKY_API')]",
+				"[concat(variables('factoryId'), '/datasets/bronce')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ORO')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ORO",
+								"type": "DatasetReference"
+							},
+							"name": "PLATA"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "paises"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "aviones"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "sink1"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "sink2"
+						},
+						{
+							"linkedService": {
+								"referenceName": "database",
+								"type": "LinkedServiceReference"
+							},
+							"name": "sink3"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "aggregate1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "join1"
+						},
+						{
+							"name": "select3"
+						},
+						{
+							"name": "alterRow1"
+						},
+						{
+							"name": "select4"
+						},
+						{
+							"name": "aggregate2"
+						},
+						{
+							"name": "select5"
+						},
+						{
+							"name": "filter1"
+						},
+						{
+							"name": "join2"
+						},
+						{
+							"name": "alterRow2"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     timestamp as string",
+						"}",
+						"source(output(",
+						"          icao24 as string,",
+						"          callsign as string,",
+						"          origin_country as string,",
+						"          time_position as string,",
+						"          last_contact as string,",
+						"          longitude as string,",
+						"          latitude as string,",
+						"          baro_altitude as string,",
+						"          on_ground as string,",
+						"          velocity as string,",
+						"          true_track as string,",
+						"          vertical_rate as string,",
+						"          sensors as string,",
+						"          geo_altitude as string,",
+						"          squawk as string,",
+						"          spi as string,",
+						"          position_source as string,",
+						"          category as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> PLATA",
+						"source(output(",
+						"          id_pais as integer,",
+						"          descripcion as string,",
+						"          creacion as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_pais',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> paises",
+						"source(output(",
+						"          id_avion as integer,",
+						"          descripcion as string,",
+						"          creacion as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_aviones',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> aviones",
+						"PLATA derive(time_position = toTimestamp(toLong(time_position) * 1000),",
+						"          last_contact = toTimestamp(toLong(last_contact) * 1000),",
+						"          longitude = toFloat(longitude),",
+						"          latitude = toFloat(latitude),",
+						"          baro_altitude = toFloat(baro_altitude),",
+						"          on_ground = toBoolean(on_ground),",
+						"          velocity = toFloat(velocity),",
+						"          true_track = toFloat(true_track),",
+						"          vertical_rate = toFloat(vertical_rate),",
+						"          geo_altitude = toFloat(geo_altitude),",
+						"          spi = toBoolean(spi),",
+						"          position_source = toInteger(position_source),",
+						"          category = iif(isNull(category), 0, toInteger(category))) ~> derivedColumn1",
+						"derivedColumn1 select(mapColumn(",
+						"          origin_country,",
+						"          icao24",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 aggregate(groupBy(origin_country),",
+						"     icao24 = first(icao24)) ~> aggregate1",
+						"paises select(mapColumn(",
+						"          id_pais,",
+						"          descripcion",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"aggregate1, select2 join(origin_country == descripcion,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 select(mapColumn(",
+						"          origin_country,",
+						"          descripcion",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select3",
+						"select3 alterRow(insertIf(origin_country!=descripcion)) ~> alterRow1",
+						"derivedColumn1 select(mapColumn(",
+						"          icao24,",
+						"          callsign",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select4",
+						"select4 aggregate(groupBy(callsign),",
+						"     icao24 = first(icao24)) ~> aggregate2",
+						"aviones select(mapColumn(",
+						"          id_avion,",
+						"          descripcion",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select5",
+						"aggregate2 filter(callsign != '') ~> filter1",
+						"filter1, select5 join(callsign == descripcion,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join2",
+						"join2 alterRow(insertIf(callsign!=descripcion)) ~> alterRow2",
+						"derivedColumn1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'ORO',",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: false,",
+						"     truncate: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> sink1",
+						"alterRow1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_pais',",
+						"     insertable: false,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: true,",
+						"     keys:['descripcion'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          descripcion = origin_country",
+						"     )) ~> sink2",
+						"alterRow2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id_avion as integer,",
+						"          descripcion as string,",
+						"          creacion as timestamp",
+						"     ),",
+						"     format: 'table',",
+						"     store: 'sqlserver',",
+						"     schemaName: 'dbo',",
+						"     tableName: 'd_aviones',",
+						"     insertable: false,",
+						"     updateable: false,",
+						"     deletable: false,",
+						"     upsertable: true,",
+						"     keys:['descripcion'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          descripcion = callsign",
+						"     )) ~> sink3"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ORO')]",
+				"[concat(variables('factoryId'), '/linkedServices/database')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PLATA')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "datalake",
+								"type": "LinkedServiceReference"
+							},
+							"name": "BRONCE"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Plata",
+								"type": "DatasetReference"
+							},
+							"name": "PLATA"
+						}
+					],
+					"transformations": [
+						{
+							"name": "getColumnas"
+						},
+						{
+							"name": "flatten1"
+						},
+						{
+							"name": "select1"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     timestamp as string",
+						"}",
+						"source(output(",
+						"          states as string[][],",
+						"          time as integer",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'json',",
+						"     fileSystem: 'aerodata',",
+						"     folderPath: 'bronce',",
+						"     fileName: ($timestamp),",
+						"     documentForm: 'documentPerLine') ~> BRONCE",
+						"flatten1 derive(icao24 = states[1],",
+						"          callsign = states[2],",
+						"          origin_country = states[3],",
+						"          time_position = states[4],",
+						"          last_contact = states[5],",
+						"          longitude = states[6],",
+						"          latitude = states[7],",
+						"          baro_altitude = states[8],",
+						"          on_ground = states[9],",
+						"          velocity = states[10],",
+						"          true_track = states[11],",
+						"          vertical_rate = states[12],",
+						"          sensors = states[13],",
+						"          geo_altitude = states[14],",
+						"          squawk = states[15],",
+						"          spi = states[16],",
+						"          position_source = states[17],",
+						"          category = states[18]) ~> getColumnas",
+						"BRONCE foldDown(unroll(states, states),",
+						"     mapColumn(",
+						"          states,",
+						"          time",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> flatten1",
+						"getColumnas select(mapColumn(",
+						"          icao24,",
+						"          callsign,",
+						"          origin_country,",
+						"          time_position,",
+						"          last_contact,",
+						"          longitude,",
+						"          latitude,",
+						"          baro_altitude,",
+						"          on_ground,",
+						"          velocity,",
+						"          true_track,",
+						"          vertical_rate,",
+						"          sensors,",
+						"          geo_altitude,",
+						"          squawk,",
+						"          spi,",
+						"          position_source,",
+						"          category",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          icao24 as string,",
+						"          callsign as string,",
+						"          origin_country as string,",
+						"          time_position as string,",
+						"          last_contact as string,",
+						"          longitude as string,",
+						"          latitude as string,",
+						"          baro_altitude as string,",
+						"          on_ground as string,",
+						"          velocity as string,",
+						"          true_track as string,",
+						"          vertical_rate as string,",
+						"          sensors as string,",
+						"          geo_altitude as string,",
+						"          squawk as string,",
+						"          spi as string,",
+						"          position_source as string,",
+						"          category as string",
+						"     ),",
+						"     format: 'parquet',",
+						"     partitionFileNames:[($timestamp)],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> PLATA"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/datalake')]",
+				"[concat(variables('factoryId'), '/datasets/Plata')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ORO')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ORO",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "ORO",
+								"type": "DataFlowReference",
+								"parameters": {
+									"timestamp": {
+										"value": "'@{pipeline().parameters.timestamp}'",
+										"type": "Expression"
+									}
+								},
+								"datasetParameters": {
+									"PLATA": {
+										"timestamp": {
+											"value": "@pipeline().parameters.timestamp",
+											"type": "Expression"
+										}
+									},
+									"paises": {},
+									"aviones": {},
+									"sink1": {},
+									"sink2": {},
+									"sink3": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "FT",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "ORO",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "FT",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"ORO": {},
+									"pais": {},
+									"aviones": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/ORO')]",
+				"[concat(variables('factoryId'), '/dataflows/FT')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PLATA')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PLATA",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "PLATA",
+								"type": "DataFlowReference",
+								"parameters": {
+									"timestamp": {
+										"value": "'@{pipeline().parameters.timestamp}'",
+										"type": "Expression"
+									}
+								},
+								"datasetParameters": {
+									"BRONCE": {},
+									"PLATA": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"timestamp": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/PLATA')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ALL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "BRONCE",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Set timestamp",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "BRONCE",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"timestamp": {
+									"value": "@variables('timestamp')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "PLATA",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "BRONCE",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PLATA",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"timestamp": {
+									"value": "@variables('timestamp')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Set timestamp",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "timestamp",
+							"value": {
+								"value": "@convertTimeZone(utcNow(), 'UTC', 'Romance Standard Time', 'dd-MM-yyyy HH:mm:ss')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ORO",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "PLATA",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "ORO",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"timestamp": {
+									"value": "@variables('timestamp')",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"timestamp": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/BRONCE')]",
+				"[concat(variables('factoryId'), '/pipelines/PLATA')]",
+				"[concat(variables('factoryId'), '/pipelines/ORO')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger1')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "ALL",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2026-04-19T21:22:00",
+						"timeZone": "Romance Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/ALL')]"
+			]
+		}
+	]
+}
