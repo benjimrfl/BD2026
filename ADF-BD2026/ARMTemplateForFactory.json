@@ -1267,8 +1267,8 @@
 					"recurrence": {
 						"frequency": "Minute",
 						"interval": 15,
-						"startTime": "2026-04-19T21:24:00",
-						"timeZone": "Romance Standard Time"
+						"startTime": "2026-04-19T21:34:00Z",
+						"timeZone": "UTC"
 					}
 				}
 			},
