@@ -1,0 +1,24 @@
+{
+	"name": "Trigger 15 min",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "ALL",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 15,
+				"startTime": "2026-04-19T21:12:00",
+				"timeZone": "Romance Standard Time"
+			}
+		}
+	}
+}
